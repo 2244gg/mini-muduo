@@ -20,6 +20,9 @@ public:
     void setErrorCallback(EventCallback cb);
 
     void handleEvent();
+
+    void disableAll();
+    void enableReading();
 private:
     int fd_;
     uint32_t events_;

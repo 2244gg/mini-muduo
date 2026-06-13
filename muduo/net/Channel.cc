@@ -1,9 +1,10 @@
 #include "Channel.h"
 #include <sys/epoll.h>
-Channel::Channel(int fd,uint32_t events=0)
+Channel::Channel(int fd,uint32_t events)
 {
     fd_=fd;
     events_=events;
+    revents_=0;
 }
 
 int Channel::fd() const{
@@ -30,18 +31,24 @@ void Channel::setErrorCallback(EventCallback cb){
     errorCallback_=cb;
 }
 
+void Channel::disableAll(){
+    events_=0;
+}
+void Channel::enableReading(){
+    events_=events_|EPOLLIN;
+}
+
 void Channel::handleEvent(){
-    if((events_&revents_)==0) return;
-    if(revents_&EPOLLERR){
+    if(errorCallback_&&(revents_&EPOLLERR)){
         errorCallback_();
     }
-    if((revents_&EPOLLHUP)&&!(revents_&EPOLLIN)){
+    if(closeCallback_&&(revents_&EPOLLHUP)&&!(revents_&EPOLLIN)){
         closeCallback_();
     }
-    if(revents_&EPOLLIN){
+    if(readCallback_&&revents_&EPOLLIN){
         readCallback_();
     }
-    if(revents_&EPOLLOUT){
+    if(writeCallback_&&revents_&EPOLLOUT){
         writeCallback_();
     }
 }
