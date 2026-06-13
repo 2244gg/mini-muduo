@@ -1,8 +1,9 @@
 #include "Channel.h"
 #include <sys/epoll.h>
-Channel::Channel(int fd)
+Channel::Channel(int fd,uint32_t events=0)
 {
     fd_=fd;
+    events_=events;
 }
 
 int Channel::fd() const{
@@ -12,9 +13,8 @@ int Channel::fd() const{
 uint32_t Channel::events() const{
     return events_;
 }
-uint32_t Channel::set_revents(uint32_t revt){
+void Channel::set_revents(uint32_t revt){
     revents_=revt;
-    return revents_;
 }
 
 void Channel::setReadCallback(EventCallback cb){
@@ -31,19 +31,17 @@ void Channel::setErrorCallback(EventCallback cb){
 }
 
 void Channel::handleEvent(){
-    if(events_&revents_==0) return;
-    switch(revents_){
-        case EPOLLIN:
-            readCallback_();
-        break;
-        case EPOLLOUT:
-            writeCallback_();
-        break;
-        case EPOLLHUP:
-            closeCallback_();
-        break;
-        case EPOLLERR:
-            errorCallback_();
-        break;
+    if((events_&revents_)==0) return;
+    if(revents_&EPOLLERR){
+        errorCallback_();
+    }
+    if((revents_&EPOLLHUP)&&!(revents_&EPOLLIN)){
+        closeCallback_();
+    }
+    if(revents_&EPOLLIN){
+        readCallback_();
+    }
+    if(revents_&EPOLLOUT){
+        writeCallback_();
     }
 }

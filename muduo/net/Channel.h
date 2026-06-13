@@ -7,12 +7,12 @@ class Channel {
 public:
     using EventCallback = std::function<void()>;
 
-    Channel(int fd);
+    Channel(int fd,uint32_t events=0);
 
     int fd() const;
 
     uint32_t events() const;
-    uint32_t set_revents(uint32_t revt);
+    void set_revents(uint32_t revt);
     
     void setReadCallback(EventCallback cb);
     void setWriteCallback(EventCallback cb);
